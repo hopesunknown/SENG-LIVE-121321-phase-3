@@ -16,6 +16,19 @@ class PatientORM
         # )
 
         # method hints => ".each", ".respond_to?", ".send"
+
+        #iterate over attributes
+       attributes.each do |key, value|
+
+        #making sure that the key exists for what we're trying to create
+        if self.respond_to?("#{key.to_s}=")
+
+            #send key / value pairing
+            self.send("#{key.to_s}=", value)
+        end
+    end
+
+
     end
 
     def save
@@ -30,6 +43,13 @@ class PatientORM
         # PatientORM class instances to DB with appropriate IDs
 
         # NOTE => Remember to return "self" instance
+
+        DB.execute(sql, self.species, self.name, self.age, self.owner, self.number)
+        # this next line adds to the end of the table
+        @id = DB.last_insert_row_id
+
+        # this next line returns new patient instance
+        self
     end
 
     def self.create(args)
@@ -37,6 +57,15 @@ class PatientORM
         # create / add new PatientORM class instances to DB
         
         # NOTE => Remember to return "patient" instance
+
+        #Instantiate PatientORM Class
+        patient = PatientORM.new(args)
+
+        #Save patient to DB
+        patient.save
+
+        #Return new patient instance
+        patient
     end
 
     def self.all 
@@ -47,6 +76,14 @@ class PatientORM
 
         # NOTE => Remember to return "mapped_resources" as an iterable list
         # of patients
+
+        resources = DB.execute("SELECT * FROM patients")
+
+        mapped_resources = resources.map do |patient|
+            self.new(patient)
+        end
+
+        mapped_resources
     end
 
     def self.create_table 
